@@ -1,5 +1,6 @@
 """Orchestrator: one Agent SDK query per chat turn. Specialists run as subagents."""
 import json
+import time
 from collections.abc import AsyncIterator, Callable
 from typing import Any
 
@@ -66,12 +67,17 @@ async def run_turn(
 
     options = build_options(store.get_profile(), store, api_key)
     final = ""
+    started = time.monotonic()
+    specialists: list[str] = []
+    cost_usd: float | None = None
     try:
         async for msg in runner(prompt=message, options=options):
             if isinstance(msg, AssistantMessage):
                 for block in msg.content:
                     if isinstance(block, ToolUseBlock) and block.name in ("Agent", "Task"):
-                        yield {"type": "specialist", "name": block.input.get("subagent_type", "general")}
+                        name = block.input.get("subagent_type", "general")
+                        specialists.append(name)
+                        yield {"type": "specialist", "name": name}
                     elif isinstance(block, TextBlock) and not getattr(msg, "parent_tool_use_id", None):
                         final = block.text  # last top-level text wins
             elif isinstance(msg, ResultMessage):
@@ -79,7 +85,14 @@ async def run_turn(
                     yield {"type": "error", "text": "The assistant hit an error. Please try again."}
                     return
                 final = msg.result or final
+                cost_usd = msg.total_cost_usd
     except Exception:  # SDK/CLI/auth failures: never leak details or a partial unsafe answer
         yield {"type": "error", "text": "Could not reach the model. Check your API key and try again."}
         return
-    yield {"type": "final", "text": hooks.enforce_output(final)}
+    yield {
+        "type": "final",
+        "text": hooks.enforce_output(final),
+        "specialists": specialists,
+        "latency_ms": round((time.monotonic() - started) * 1000),
+        "cost_usd": cost_usd,
+    }

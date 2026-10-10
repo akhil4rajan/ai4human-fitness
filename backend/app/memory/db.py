@@ -16,8 +16,19 @@ class Store:
               day TEXT NOT NULL DEFAULT (date('now')),
               weight_kg REAL, sleep_hours REAL, mood INTEGER, stress INTEGER, workout_done INTEGER, notes TEXT
             );
+            CREATE TABLE IF NOT EXISTS feedback (
+              id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL DEFAULT (datetime('now')),
+              turn_id TEXT, rating INTEGER NOT NULL
+            );
             """
         )
+
+    def add_feedback(self, turn_id: str | None, rating: int) -> None:
+        self.conn.execute("INSERT INTO feedback (turn_id, rating) VALUES (?, ?)", (turn_id, rating))
+        self.conn.commit()
+
+    def export_all(self) -> dict:
+        return {"profile": self.get_profile(), "checkins": self.recent_checkins(10_000)}
 
     def get_profile(self) -> dict:
         row = self.conn.execute("SELECT data FROM profile WHERE id = 1").fetchone()
@@ -43,5 +54,5 @@ class Store:
         return [dict(r) for r in reversed(rows)]
 
     def delete_all(self) -> None:
-        self.conn.executescript("DELETE FROM profile; DELETE FROM checkin;")
+        self.conn.executescript("DELETE FROM profile; DELETE FROM checkin; DELETE FROM feedback;")
         self.conn.commit()

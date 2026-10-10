@@ -1,10 +1,13 @@
 import json
 import os
+from typing import Literal
 
+from claude_agent_sdk import query
 from fastapi import FastAPI, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from app.fake_runner import fake_query
 from app.memory.db import Store
 from app.orchestrator import run_turn
 from app.tools import calculators as calc
@@ -14,13 +17,37 @@ app = FastAPI(title="AI4Human")
 DISCLAIMER = "Wellness guidance only; not medical advice."
 
 
+Activity = Literal["sedentary", "light", "moderate", "active", "very_active"]
+Goal = Literal["lose", "maintain", "gain"]
+
+
 class PlanRequest(BaseModel):
     sex: calc.Sex
     age: int = Field(ge=18, le=100)
     weight_kg: float = Field(gt=30, lt=300)
     height_cm: float = Field(gt=120, lt=250)
-    activity: str
-    goal: str = "maintain"
+    activity: Activity
+    goal: Goal = "maintain"
+
+
+class ProfileIn(PlanRequest):
+    diet: str = Field(default="", max_length=200)
+    injuries: str = Field(default="", max_length=500)
+    notes: str = Field(default="", max_length=1000)
+
+
+class CheckinIn(BaseModel):
+    weight_kg: float | None = Field(default=None, gt=30, lt=300)
+    sleep_hours: float | None = Field(default=None, ge=0, le=24)
+    mood: int | None = Field(default=None, ge=1, le=10)
+    stress: int | None = Field(default=None, ge=1, le=10)
+    workout_done: bool | None = None
+    notes: str | None = Field(default=None, max_length=500)
+
+
+class FeedbackIn(BaseModel):
+    turn_id: str | None = Field(default=None, max_length=64)
+    rating: Literal[-1, 1]
 
 
 @app.get("/health")
@@ -56,7 +83,50 @@ async def chat(req: ChatRequest, x_anthropic_key: str | None = Header(default=No
     The BYO API key is used for this request only and is never stored or logged."""
 
     async def events():
-        async for ev in run_turn(req.message, get_store(), api_key=x_anthropic_key):
+        runner = fake_query if os.environ.get("AI4HUMAN_FAKE_RUNNER") == "1" else query
+        async for ev in run_turn(req.message, get_store(), api_key=x_anthropic_key, runner=runner):
             yield f"data: {json.dumps(ev)}\n\n"
 
     return StreamingResponse(events(), media_type="text/event-stream")
+
+
+@app.get("/api/profile")
+def read_profile() -> dict:
+    return get_store().get_profile()
+
+
+@app.put("/api/profile")
+def write_profile(profile: ProfileIn) -> dict:
+    get_store().set_profile(profile.model_dump())
+    return profile.model_dump()
+
+
+@app.get("/api/checkins")
+def read_checkins(days: int = 30) -> list[dict]:
+    return get_store().recent_checkins(max(1, min(days, 365)))
+
+
+@app.post("/api/checkins", status_code=201)
+def write_checkin(c: CheckinIn) -> dict:
+    fields = c.model_dump()
+    if fields["workout_done"] is not None:
+        fields["workout_done"] = int(fields["workout_done"])
+    get_store().add_checkin(**fields)
+    return {"saved": True}
+
+
+@app.post("/api/feedback", status_code=201)
+def feedback(f: FeedbackIn) -> dict:
+    get_store().add_feedback(f.turn_id, f.rating)
+    return {"saved": True}
+
+
+@app.get("/api/export")
+def export() -> dict:
+    return get_store().export_all()
+
+
+@app.delete("/api/data")
+def delete_data() -> dict:
+    get_store().delete_all()
+    return {"deleted": True}
