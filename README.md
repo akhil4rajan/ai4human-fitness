@@ -38,6 +38,11 @@ Real answers: start the backend without `AI4HUMAN_FAKE_RUNNER`, open **Settings*
 
 Docker (not yet built or tested in CI; see Status): `cp .env.example .env && docker compose up --build`.
 
+## Docs
+
+[Architecture](docs/architecture.md) (diagrams) · [Safety](docs/safety.md) · [Evals](docs/evals.md) ·
+[Observability](docs/observability.md) · [CLAUDE.md](CLAUDE.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
+
 ## Observability (Langfuse, optional)
 
 Set `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` / `LANGFUSE_BASE_URL`. See [docs/observability.md](docs/observability.md).
@@ -46,7 +51,8 @@ Health conversations are sensitive, so **prompt, answer and tool content is stri
 ## Tests
 
 ```bash
-cd backend && pytest -q && ruff check .      # 48 offline tests, no network
+cd backend && pytest -q && ruff check .      # 52 offline tests (incl. offline evals), no network
+cd backend && python -m evals.run            # safety/output-gate/calorie evals; see docs/evals.md
 cd frontend && npm run typecheck && npm run lint && npm test && npm run build
 cd frontend && npx playwright test           # browser smoke test against fake-runner backend
 ```
@@ -59,9 +65,10 @@ Next proxy), Langfuse span export and masking against an in-memory exporter.
 **Not yet verified:** anything against the live model or a live Langfuse project (no keys were available while
 building); Docker images (no daemon available); that `tools=["Agent"]` keeps subagent delegation working; the
 exact deny shape of the tool hook against the real CLI. Run one real chat turn before relying on it.
-Specialist quality is untested: no evals exist yet.
+Offline evals exist (docs/evals.md); live specialist-quality evals are written but have not been run.
 
 ## Roadmap
 
-Key-gated live evals (crisis recall, routing, calorie-floor, cross-domain conflicts) pushing scores to Langfuse;
+Run the live evals and record a baseline, push scores to Langfuse; add an LLM second-stage safety classifier (the rule-based
+input gate misses indirect phrasing, see docs/evals.md);
 structured `DailyPlan` output and weekly review; prompt versioning in Langfuse; wearables import.
