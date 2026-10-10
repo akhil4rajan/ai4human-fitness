@@ -7,10 +7,10 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from app.chat_service import stream_turn
 from app.fake_runner import fake_query
 from app.logging_setup import RequestContextMiddleware, setup_logging
 from app.memory.db import Store
-from app.chat_service import stream_turn
 from app.observability import Observability, init_observability
 from app.ratelimit import RateLimiter, limit_dependency
 from app.tools import calculators as calc

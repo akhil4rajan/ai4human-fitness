@@ -4,6 +4,7 @@ import time
 from collections.abc import AsyncIterator, Callable
 from typing import Any
 
+import claude_agent_sdk
 from claude_agent_sdk import (
     AssistantMessage,
     ClaudeAgentOptions,
@@ -12,7 +13,6 @@ from claude_agent_sdk import (
     TextBlock,
     ToolUseBlock,
 )
-import claude_agent_sdk
 
 from app.agents.definitions import AGENTS
 from app.memory.db import Store
@@ -90,7 +90,7 @@ async def run_turn(
                     return
                 final = msg.result or final
                 cost_usd = msg.total_cost_usd
-    except Exception:  # SDK/CLI/auth failures: never leak details or a partial unsafe answer
+    except Exception:  # noqa: BLE001 - SDK/CLI/auth failures: never leak details or a partial answer
         yield {"type": "error", "text": "Could not reach the model. Check your API key and try again."}
         return
     yield {

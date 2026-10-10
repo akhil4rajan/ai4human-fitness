@@ -3,7 +3,7 @@ import logging
 
 from fastapi.testclient import TestClient
 
-import app.main as main
+from app import main
 from app.logging_setup import JsonFormatter
 from app.ratelimit import RateLimiter
 

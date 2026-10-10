@@ -118,9 +118,8 @@ class Observability:
         with propagate_attributes(
             session_id=session_id, trace_name="chat_turn", tags=[f"env:{env}"],
             version=os.environ.get("APP_VERSION", "0.1.0"),
-        ):
-            with self._client.start_as_current_observation(name="chat_turn", as_type="span") as span:
-                yield TurnHandle(self._client, span)
+        ), self._client.start_as_current_observation(name="chat_turn", as_type="span") as span:
+            yield TurnHandle(self._client, span)
 
     def score_feedback(self, trace_id: str | None, rating: int) -> bool:
         """Attach thumbs up/down to the turn's trace. Returns False if not applicable."""

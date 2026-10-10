@@ -9,13 +9,13 @@ ALLOWED_TOOLS = {"Agent", "Task", *TOOL_NAMES.values()}
 DISCLAIMER = "\n\nWellness guidance only, not medical advice."
 CALORIE_FLOOR = 1200
 
-_DAILY = re.compile(r"(daily|per day|a day|each day|target|total)", re.I)
-_KCAL = re.compile(r"(\d{1,2},?\d{3}|\d{3,4})\s*(kcal|calories|cal)\b", re.I)
-_DOSING = re.compile(r"\b(take|taking|dose of|dosage)\b[^.\n]{0,30}\b\d+(\.\d+)?\s?(mg|mcg|µg|iu|g)\b", re.I)
+_DAILY = re.compile(r"(daily|per day|a day|each day|target|total)", re.IGNORECASE)
+_KCAL = re.compile(r"(\d{1,2},?\d{3}|\d{3,4})\s*(kcal|calories|cal)\b", re.IGNORECASE)
+_DOSING = re.compile(r"\b(take|taking|dose of|dosage)\b[^.\n]{0,30}\b\d+(\.\d+)?\s?(mg|mcg|µg|iu|g)\b", re.IGNORECASE)
 _DIAGNOSIS = re.compile(
     r"\byou (have|are suffering from|likely have|probably have)\s+(an? )?"
     r"(depress\w*|anxiety disorder|eating disorder|anorexi\w*|bulimi\w*|bipolar\w*|adhd|ptsd|diabet\w*)",
-    re.I,
+    re.IGNORECASE,
 )
 SAFE_FALLBACK = (
     "I can't give that specific advice. I can help with general wellness habits, but for diagnosis, "
