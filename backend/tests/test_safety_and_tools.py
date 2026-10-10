@@ -35,8 +35,8 @@ def test_tdee_known_value():
 
 
 def test_chat_crisis_bypasses_agents():
-    r = client.post("/api/chat", json={"message": "I want to die"}).json()
-    assert r["safety"] is True and "988" in r["reply"]
+    r = client.post("/api/chat", json={"message": "I want to die"})
+    assert '"type": "safety"' in r.text and "988" in r.text
 
 
 def test_targets_endpoint():

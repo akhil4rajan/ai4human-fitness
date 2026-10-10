@@ -1,7 +1,12 @@
-from fastapi import FastAPI
+import json
+import os
+
+from fastapi import FastAPI, Header
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from app.safety.gate import check_input
+from app.memory.db import Store
+from app.orchestrator import run_turn
 from app.tools import calculators as calc
 
 app = FastAPI(title="AI4Human")
@@ -32,12 +37,26 @@ def targets(req: PlanRequest) -> dict:
 
 
 class ChatRequest(BaseModel):
-    message: str
+    message: str = Field(min_length=1, max_length=4000)
+
+
+_store: Store | None = None
+
+
+def get_store() -> Store:
+    global _store
+    if _store is None:
+        _store = Store(os.environ.get("AI4HUMAN_DB", "ai4human.db"))
+    return _store
 
 
 @app.post("/api/chat")
-def chat(req: ChatRequest) -> dict:
-    # Safety gate runs before any agent. Orchestrator wiring lands in Phase 3.
-    if (blocked := check_input(req.message)) is not None:
-        return {"reply": blocked, "safety": True}
-    return {"reply": "Orchestrator not wired yet.", "safety": False}
+async def chat(req: ChatRequest, x_anthropic_key: str | None = Header(default=None)) -> StreamingResponse:
+    """SSE stream of orchestrator events. Safety gate runs first inside run_turn.
+    The BYO API key is used for this request only and is never stored or logged."""
+
+    async def events():
+        async for ev in run_turn(req.message, get_store(), api_key=x_anthropic_key):
+            yield f"data: {json.dumps(ev)}\n\n"
+
+    return StreamingResponse(events(), media_type="text/event-stream")
