@@ -6,7 +6,7 @@ from app.tools.server import TOOL_NAMES
 
 ALLOWED_TOOLS = {"Agent", "Task", *TOOL_NAMES.values()}
 
-DISCLAIMER = "\n\n_Wellness guidance only, not medical advice._"
+DISCLAIMER = "\n\nWellness guidance only, not medical advice."
 CALORIE_FLOOR = 1200
 
 _DAILY = re.compile(r"(daily|per day|a day|each day|target|total)", re.I)

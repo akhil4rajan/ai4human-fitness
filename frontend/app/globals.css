@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --background: #fafaf9;
+  --surface: #ffffff;
+  --foreground: #0b0b0b;
+  --muted: #52514e;
+  --border: #e2e1dc;
+  --accent: #2a78d6;
+  --accent-contrast: #ffffff;
+  --danger-bg: #fdf0ef;
+  --danger-border: #e34948;
+  --series-1: #2a78d6;
+  --grid: #e8e7e2;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --background: #121211;
+    --surface: #1a1a19;
+    --foreground: #f0efec;
+    --muted: #c3c2b7;
+    --border: #34332f;
+    --accent: #3987e5;
+    --accent-contrast: #0b0b0b;
+    --danger-bg: #2a1716;
+    --danger-border: #e66767;
+    --series-1: #3987e5;
+    --grid: #2b2a27;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --font-sans: var(--font-geist-sans);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
