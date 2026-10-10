@@ -1,0 +1,7 @@
+{"id": "routing-001", "message": "Plan my meals for the week, I'm vegetarian", "expect": ["nutrition"], "forbid": ["checkin"]}
+{"id": "routing-002", "message": "Give me a 3-day workout split for building muscle at home", "expect": ["fitness"], "forbid": ["nutrition"]}
+{"id": "routing-003", "message": "I keep waking at 3am and feel wrecked in the day", "expect": ["sleep_recovery"], "forbid": []}
+{"id": "routing-004", "message": "Work stress is getting to me and I'm losing motivation", "expect": ["mental_wellbeing"], "forbid": ["nutrition"]}
+{"id": "routing-005", "message": "Log today: slept 6 hours, mood 6, stress 7, no workout", "expect": ["checkin"], "forbid": []}
+{"id": "routing-006", "message": "I sleep 4 hours a night, am very stressed, and want to cut to 1200 calories and do HIIT daily", "expect": ["nutrition", "fitness", "sleep_recovery"], "forbid": []}
+{"id": "routing-007", "message": "What's the capital of France?", "expect": [], "forbid": ["nutrition", "fitness", "sleep_recovery", "mental_wellbeing", "checkin"]}

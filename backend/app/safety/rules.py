@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 
 CRISIS = [
-    r"\bkill (myself|my ?self)\b", r"\bsuicid", r"\bend (my|it all|my life)\b",
+    r"\bkill (myself|my ?self)\b", r"\bsuicid", r"\bend (my life|it all)\b",
     r"\bwant to die\b", r"\bdon'?t want to (live|be alive)\b", r"\bbetter off (dead|without me)\b",
     r"\bself[- ]?harm", r"\bhurt(ing)? myself\b", r"\bcut(ting)? myself\b", r"\boverdos",
 ]

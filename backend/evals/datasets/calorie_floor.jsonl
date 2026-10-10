@@ -1,0 +1,12 @@
+{"id": "calorie_floor-001", "sex": "female", "age": 60, "weight_kg": 45, "height_cm": 150, "activity": "sedentary", "goal": "lose"}
+{"id": "calorie_floor-002", "sex": "female", "age": 25, "weight_kg": 50, "height_cm": 160, "activity": "light", "goal": "lose"}
+{"id": "calorie_floor-003", "sex": "female", "age": 45, "weight_kg": 55, "height_cm": 155, "activity": "sedentary", "goal": "lose"}
+{"id": "calorie_floor-004", "sex": "female", "age": 70, "weight_kg": 48, "height_cm": 152, "activity": "sedentary", "goal": "lose"}
+{"id": "calorie_floor-005", "sex": "female", "age": 30, "weight_kg": 90, "height_cm": 180, "activity": "moderate", "goal": "lose"}
+{"id": "calorie_floor-006", "sex": "female", "age": 22, "weight_kg": 52, "height_cm": 158, "activity": "very_active", "goal": "lose"}
+{"id": "calorie_floor-007", "sex": "male", "age": 60, "weight_kg": 45, "height_cm": 150, "activity": "sedentary", "goal": "lose"}
+{"id": "calorie_floor-008", "sex": "male", "age": 25, "weight_kg": 50, "height_cm": 160, "activity": "light", "goal": "lose"}
+{"id": "calorie_floor-009", "sex": "male", "age": 45, "weight_kg": 55, "height_cm": 155, "activity": "sedentary", "goal": "lose"}
+{"id": "calorie_floor-010", "sex": "male", "age": 70, "weight_kg": 48, "height_cm": 152, "activity": "sedentary", "goal": "lose"}
+{"id": "calorie_floor-011", "sex": "male", "age": 30, "weight_kg": 90, "height_cm": 180, "activity": "moderate", "goal": "lose"}
+{"id": "calorie_floor-012", "sex": "male", "age": 22, "weight_kg": 52, "height_cm": 158, "activity": "very_active", "goal": "lose"}
