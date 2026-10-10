@@ -3,14 +3,16 @@ import os
 from contextlib import asynccontextmanager
 from typing import Literal
 
-from fastapi import FastAPI, Header
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.fake_runner import fake_query
+from app.logging_setup import RequestContextMiddleware, setup_logging
 from app.memory.db import Store
 from app.chat_service import stream_turn
 from app.observability import Observability, init_observability
+from app.ratelimit import RateLimiter, limit_dependency
 from app.tools import calculators as calc
 
 obs: Observability = Observability()
@@ -24,7 +26,10 @@ async def lifespan(_: FastAPI):
     obs.shutdown()
 
 
+setup_logging(os.environ.get("LOG_LEVEL", "INFO"))
 app = FastAPI(title="AI4Human", lifespan=lifespan)
+app.add_middleware(RequestContextMiddleware)
+chat_limiter = RateLimiter(int(os.environ.get("CHAT_RATE_LIMIT_PER_MIN", "20")))
 
 DISCLAIMER = "Wellness guidance only; not medical advice."
 
@@ -64,7 +69,18 @@ class FeedbackIn(BaseModel):
 
 @app.get("/health")
 def health() -> dict[str, str]:
+    """Liveness: the process is up."""
     return {"status": "ok"}
+
+
+@app.get("/ready")
+def ready() -> dict[str, str]:
+    """Readiness: the database answers."""
+    try:
+        get_store().conn.execute("SELECT 1").fetchone()
+    except Exception as e:
+        raise HTTPException(503, "database unavailable") from e
+    return {"status": "ready"}
 
 
 @app.post("/api/targets")
@@ -89,7 +105,7 @@ def get_store() -> Store:
     return _store
 
 
-@app.post("/api/chat")
+@app.post("/api/chat", dependencies=[Depends(limit_dependency(chat_limiter))])
 async def chat(
     req: ChatRequest,
     x_anthropic_key: str | None = Header(default=None),
