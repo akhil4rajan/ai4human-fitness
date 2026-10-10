@@ -11,13 +11,14 @@ from claude_agent_sdk import (
     ResultMessage,
     TextBlock,
     ToolUseBlock,
-    query,
 )
+import claude_agent_sdk
 
 from app.agents.definitions import AGENTS
 from app.memory.db import Store
 from app.safety import hooks
-from app.safety.gate import check_input
+from app.safety.resources import RESPONSES
+from app.safety.rules import classify
 from app.tools.server import TOOL_NAMES, build_server
 
 ORCHESTRATOR_MODEL = "claude-sonnet-5-5"
@@ -58,12 +59,15 @@ async def run_turn(
     message: str,
     store: Store,
     api_key: str | None = None,
-    runner: Callable[..., AsyncIterator[Any]] = query,
+    runner: Callable[..., AsyncIterator[Any]] | None = None,
 ) -> AsyncIterator[dict[str, Any]]:
     """Yield UI events: {"type": "safety"|"specialist"|"final"|"error", ...}."""
-    if (blocked := check_input(message)) is not None:
-        yield {"type": "safety", "text": blocked}
+    if (verdict := classify(message)).blocked:
+        yield {"type": "safety", "text": RESPONSES[verdict.category], "category": verdict.category}
         return
+
+    # Resolve at call time: tracing instrumentation replaces claude_agent_sdk.query after import.
+    runner = runner or claude_agent_sdk.query
 
     options = build_options(store.get_profile(), store, api_key)
     final = ""
@@ -92,6 +96,7 @@ async def run_turn(
     yield {
         "type": "final",
         "text": hooks.enforce_output(final),
+        "output_gate_blocked": hooks.violates(final),
         "specialists": specialists,
         "latency_ms": round((time.monotonic() - started) * 1000),
         "cost_usd": cost_usd,

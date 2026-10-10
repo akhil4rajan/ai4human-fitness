@@ -11,6 +11,7 @@ interface Msg {
   kind?: "safety" | "error";
   specialists?: string[];
   meta?: string;
+  turnId?: string;
   rated?: 1 | -1;
 }
 
@@ -65,7 +66,7 @@ export default function Chat() {
         else if (ev.type === "final") {
           const secs = (ev.latency_ms / 1000).toFixed(1);
           const cost = ev.cost_usd != null ? ` · $${ev.cost_usd.toFixed(3)}` : "";
-          reply({ text: ev.text, specialists: ev.specialists, meta: `${secs}s${cost}` });
+          reply({ text: ev.text, specialists: ev.specialists, meta: `${secs}s${cost}`, turnId: ev.turn_id });
         }
       }
       if (!got) reply({ text: "No response received. Please try again.", kind: "error" });
@@ -77,9 +78,9 @@ export default function Chat() {
     }
   }
 
-  function rate(id: string, rating: 1 | -1) {
+  function rate(id: string, turnId: string | undefined, rating: 1 | -1) {
     setMsgs((m) => m.map((x) => (x.id === id ? { ...x, rated: rating } : x)));
-    api.feedback(id, rating).catch(() => {});
+    api.feedback(turnId ?? id, rating).catch(() => {});
   }
 
   return (
@@ -143,7 +144,7 @@ export default function Chat() {
                     {([1, -1] as const).map((r) => (
                       <button
                         key={r}
-                        onClick={() => rate(m.id, r)}
+                        onClick={() => rate(m.id, m.turnId, r)}
                         disabled={m.rated !== undefined}
                         aria-label={r === 1 ? "Helpful" : "Not helpful"}
                         aria-pressed={m.rated === r}

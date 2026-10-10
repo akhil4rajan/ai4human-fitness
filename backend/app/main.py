@@ -1,18 +1,30 @@
 import json
 import os
+from contextlib import asynccontextmanager
 from typing import Literal
 
-from claude_agent_sdk import query
 from fastapi import FastAPI, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.fake_runner import fake_query
 from app.memory.db import Store
-from app.orchestrator import run_turn
+from app.chat_service import stream_turn
+from app.observability import Observability, init_observability
 from app.tools import calculators as calc
 
-app = FastAPI(title="AI4Human")
+obs: Observability = Observability()
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    global obs
+    obs = init_observability()
+    yield
+    obs.shutdown()
+
+
+app = FastAPI(title="AI4Human", lifespan=lifespan)
 
 DISCLAIMER = "Wellness guidance only; not medical advice."
 
@@ -78,13 +90,18 @@ def get_store() -> Store:
 
 
 @app.post("/api/chat")
-async def chat(req: ChatRequest, x_anthropic_key: str | None = Header(default=None)) -> StreamingResponse:
+async def chat(
+    req: ChatRequest,
+    x_anthropic_key: str | None = Header(default=None),
+    x_session_id: str | None = Header(default=None, max_length=64),
+) -> StreamingResponse:
     """SSE stream of orchestrator events. Safety gate runs first inside run_turn.
     The BYO API key is used for this request only and is never stored or logged."""
 
     async def events():
-        runner = fake_query if os.environ.get("AI4HUMAN_FAKE_RUNNER") == "1" else query
-        async for ev in run_turn(req.message, get_store(), api_key=x_anthropic_key, runner=runner):
+        runner = fake_query if os.environ.get("AI4HUMAN_FAKE_RUNNER") == "1" else None
+        async for ev in stream_turn(req.message, get_store(), obs, api_key=x_anthropic_key,
+                                    session_id=x_session_id, runner=runner):
             yield f"data: {json.dumps(ev)}\n\n"
 
     return StreamingResponse(events(), media_type="text/event-stream")
@@ -118,6 +135,7 @@ def write_checkin(c: CheckinIn) -> dict:
 @app.post("/api/feedback", status_code=201)
 def feedback(f: FeedbackIn) -> dict:
     get_store().add_feedback(f.turn_id, f.rating)
+    obs.score_feedback(f.turn_id, f.rating)
     return {"saved": True}
 
 
