@@ -6,6 +6,8 @@ export default defineConfig({
   timeout: 30_000,
   use: {
     baseURL: "http://127.0.0.1:3100",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
     launchOptions: { executablePath: process.env.CHROMIUM_PATH || undefined },
   },
   webServer: [

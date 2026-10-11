@@ -13,11 +13,18 @@ export default function ProfileForm() {
   const [p, setP] = useState<Profile>(EMPTY);
   const [targets, setTargets] = useState<Targets | null>(null);
   const [status, setStatus] = useState("");
+  // The form stays disabled until the saved profile has loaded, so a late response can never
+  // overwrite what the user already typed.
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    api.profile().then((saved) => {
-      if (saved.age) setP({ ...EMPTY, ...saved });
-    }).catch(() => {});
+    api
+      .profile()
+      .then((saved) => {
+        if (saved.age) setP({ ...EMPTY, ...saved });
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, []);
 
   const valid = p.age >= 18 && p.age <= 100 && p.weight_kg > 30 && p.weight_kg < 300 && p.height_cm > 120 && p.height_cm < 250;
@@ -53,7 +60,7 @@ export default function ProfileForm() {
         Stored only on this machine. This app is for adults (18+). If you are pregnant, managing a medical
         condition, or recovering from an injury, check plans with a doctor or registered dietitian first.
       </p>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <fieldset disabled={!loaded} aria-busy={!loaded} className="grid min-w-0 gap-4 border-0 p-0 sm:grid-cols-2">
         <Field id="sex" label="Sex (for calorie formulas)">
           <select id="sex" className={inputClass} value={p.sex} onChange={(e) => set("sex", e.target.value as Profile["sex"])}>
             <option value="female">Female</option>
@@ -91,7 +98,7 @@ export default function ProfileForm() {
         <Field id="injuries" label="Injuries / limitations">
           <input id="injuries" className={inputClass} maxLength={500} value={p.injuries} onChange={(e) => set("injuries", e.target.value)} placeholder="e.g. sore left knee" />
         </Field>
-      </div>
+      </fieldset>
 
       {valid && targets && (
         <section aria-label="Estimated targets" className="rounded-lg border border-border bg-surface p-4">
@@ -107,8 +114,8 @@ export default function ProfileForm() {
       )}
 
       <div className="flex items-center gap-3">
-        <button className={buttonClass} disabled={!valid}>Save profile</button>
-        <p role="status" className="text-sm text-muted">{status}</p>
+        <button className={buttonClass} disabled={!valid || !loaded}>Save profile</button>
+        <p role="status" className="text-sm text-muted">{loaded ? status : "Loading your profile…"}</p>
       </div>
     </form>
   );
