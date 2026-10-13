@@ -4,8 +4,10 @@ A multi-agent wellness companion: nutrition, fitness, sleep & recovery and menta
 coordinated by an orchestrator, with a code-level safety layer. Built on the Claude Agent SDK (FastAPI) and
 Next.js. Wellness guidance only, **not medical advice**; adults (18+).
 
-Inspired by two reference apps (a Streamlit health/fitness planner and a multi-agent mental-wellbeing team),
-extended with memory, deterministic calculators, safety gating, streaming UX and production observability.
+Features persistent memory, deterministic calculators, safety gating, streaming UX and production observability.
+
+**Pitch deck (PDF):** [docs/pitch_deck.pdf](docs/pitch_deck.pdf), a non-technical overview of the problem, workflow,
+strengths, architecture, components and how it can scale.
 
 ## How it works
 
